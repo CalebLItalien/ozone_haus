@@ -14,11 +14,11 @@ impl EventHandler for Handler {
             // Display help message if only "Fiona" is mentioned
             if command_parts.len() == 1 {
                 let help_message = "\
-                    Hi, I'm Fiona, I live in your walls! Here are some things I can do:\n\
+                    Hi there! My name is Fiona. Here are some things I can do:\n\
                     - `!poll <question>? <option1> <option2> ...` : Create a poll.\n\
                     - `!remind quiet hours` : Send a reminder about quiet hours to the house.\n\
                     - `!remind event <event_name> <date> <time>` : Send a reminder for an event.\n\
-                    - `!spooky : Get spooky in here!`
+                    - `!spookytime : Get spooky in here!`
                     \n\
                     If you need more help, just type `Fiona`.";
                 
@@ -26,12 +26,24 @@ impl EventHandler for Handler {
                     println!("Error sending message: {:?}", why);
                 }
             }
+            else if msg.content == "Fiona !remind quiet hours" {
+                let quiet_hours_message = "\
+                    **Quiet Hours Reminder**\n\
+                    Weekdays: 10pm - 10am\n\
+                    Weekends: 12pm - 12am";
+                
+                if let Err(why) = msg.channel_id.say(&ctx.http, quiet_hours_message).await {
+                    println!("Error sending message: {:?}", why);
+                }
+            }
             // Process the poll command
             else if command_parts.len() > 1 && command_parts[1] == "!poll" {
                 // Combine the parts back into a string, then split by quotes to extract arguments
-                let args: Vec<&str> = command_parts[2..].join(" ").split('"')
+                let combined_args = command_parts[2..].join(" ");
+                let args: Vec<&str> = combined_args.split('"')
                     .filter(|x| !x.trim().is_empty())
                     .collect::<Vec<&str>>();
+                
 
                 if args.len() >= 2 {
                     // First argument is the question, the rest are options
@@ -39,10 +51,14 @@ impl EventHandler for Handler {
                     let options = &args[1..];
 
                     // Create and send the poll message
-                    let mut poll_message = format!("**Poll:** {}\n", question);
+                    let mut poll_message = format!("**Poll:** {}\n\n", question);
                     for (i, option) in options.iter().enumerate() {
                         poll_message.push_str(&format!("**Option {}: {}**\n", i + 1, option));
                     }
+
+                    let note = "NOTE: React to this message to cast your vote. Each reaction represents a vote for the corresponding option. Voting counters start at 1 (sorry).";
+                    poll_message.push_str("\n");
+                    poll_message.push_str(note);
 
                     let poll_msg = match msg.channel_id.say(&ctx.http, &poll_message).await {
                         Ok(msg) => msg,
