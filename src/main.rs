@@ -1,5 +1,5 @@
 use serenity::{
-    all::ReactionType, async_trait, model::{channel::Message, gateway::Ready}, prelude::*
+    all::{ChannelId, ReactionType}, async_trait, model::{channel::Message, gateway::Ready}, prelude::*
 };
 
 struct Handler;
@@ -17,8 +17,6 @@ impl EventHandler for Handler {
                     Hi there! My name is Fiona. Here are some things I can do:\n\
                     - `!poll <question>? <option1> <option2> ...` : Create a poll.\n\
                     - `!remind quiet hours` : Send a reminder about quiet hours to the house.\n\
-                    - `!remind event <event_name> <date> <time>` : Send a reminder for an event.\n\
-                    - `!spookytime : Get spooky in here!`
                     \n\
                     If you need more help, just type `Fiona`.";
                 
@@ -32,7 +30,12 @@ impl EventHandler for Handler {
                     Weekdays: 10pm - 10am\n\
                     Weekends: 12pm - 12am";
                 
-                if let Err(why) = msg.channel_id.say(&ctx.http, quiet_hours_message).await {
+                let general_channel: String = dotenv::var("GENERAL_CHANNEL_ID").expect("Expected a token in the environment");
+
+                let general_channel_id: u64 = general_channel.parse::<u64>().expect("Expected GENERAL_CHANNEL_ID to be a valid u64");
+
+                let general_channel_id: ChannelId = ChannelId::new(general_channel_id);
+                if let Err(why) = general_channel_id.say(&ctx.http, quiet_hours_message).await {
                     println!("Error sending message: {:?}", why);
                 }
             }
@@ -93,24 +96,8 @@ impl EventHandler for Handler {
                     }
                 }
             }
-            // If an unknown command is given after "Fiona", you can also provide feedback
             else {
                 if let Err(why) = msg.channel_id.say(&ctx.http, "I didn't recognize that command. Type `Fiona` for help.").await {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
-        }
-        else if msg.content.starts_with("CatBoyAbe") {
-            let command_parts: Vec<&str> = msg.content.split_whitespace().collect();
-
-            if command_parts.len() == 1 {
-                let help_message = "\
-                    Hi, I'm CatBoyAbe, I live in your walls! Here are some things I can do:\n\
-                    - `!liar` : Reminds people to tell the truth!.\n\
-                    \n\
-                    If you need more help, just type `Fiona`.";
-                
-                if let Err(why) = msg.channel_id.say(&ctx.http, help_message).await {
                     println!("Error sending message: {:?}", why);
                 }
             }
